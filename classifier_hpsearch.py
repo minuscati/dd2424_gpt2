@@ -534,10 +534,10 @@ def get_args():
   parser.add_argument("--run_hpsearch", action='store_true',
                       help="Run lr x dropout hyper-parameter search instead of default train/test flow.")
   # parser.add_argument("--search_lrs", type=str, default="5e-4,1e-3,2e-3,5e-3,1e-2",
-  parser.add_argument("--search_lrs", type=str, default="5e-4,2e-3",
+  parser.add_argument("--search_lrs", type=str, default="5e-4",
                       help="Comma-separated learning rates for search.")
   # parser.add_argument("--search_dropouts", type=str, default="0.0,0.2",
-  parser.add_argument("--search_dropouts", type=str, default="0.05,0.1",
+  parser.add_argument("--search_dropouts", type=str, default="0.005",
                       help="Comma-separated dropout rates for search.")
   parser.add_argument("--search_dataset", type=str, default="sst", choices=("sst", "cfimdb", "both"),
                       help="Which dataset(s) to run hyper-parameter search on.")
