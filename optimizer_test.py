@@ -26,7 +26,8 @@ def test_optimizer(opt_class) -> torch.Tensor:
     return model.weight.detach()
 
 if __name__ == '__main__':
-    ref = torch.tensor(np.load("optimizer_test.npy"))
+    # absolute path
+    ref = torch.tensor(np.load("D:\APPDATA\Coding\DL_course\Finalp\public_cs224n_gpt\optimizer_test.npy"))
     actual = test_optimizer(AdamW)
     print(ref)
     print(actual)

@@ -5,6 +5,10 @@ Trains and evaluates GPT2SentimentClassifier on SST and CFIMDB
 '''
 
 import random, numpy as np, argparse
+import itertools
+import json
+import os
+from datetime import datetime
 from types import SimpleNamespace
 import csv
 
@@ -12,7 +16,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from transformers import GPT2Tokenizer
-from sklearn.metrics import f1_score, accuracy_score
+from sklearn.metrics import accuracy_score
 
 from models.gpt2 import GPT2Model
 from optimizer import AdamW
@@ -199,10 +203,9 @@ def model_eval(dataloader, model, device):
     sents.extend(b_sents)
     sent_ids.extend(b_sent_ids)
 
-  f1 = f1_score(y_true, y_pred, average='macro')
   acc = accuracy_score(y_true, y_pred)
 
-  return acc, f1, y_pred, y_true, sents, sent_ids
+  return acc, y_pred, y_true, sents, sent_ids
 
 
 # Evaluate the model on test examples.
@@ -230,6 +233,10 @@ def model_test_eval(dataloader, model, device):
 
 
 def save_model(model, optimizer, args, config, filepath):
+  output_dir = os.path.dirname(filepath)
+  if output_dir:
+    os.makedirs(output_dir, exist_ok=True)
+
   save_info = {
     'model': model.state_dict(),
     'optim': optimizer.state_dict(),
@@ -242,6 +249,49 @@ def save_model(model, optimizer, args, config, filepath):
 
   torch.save(save_info, filepath)
   print(f"save the model to {filepath}")
+
+
+def fmt_float(v):
+  return f"{float(v):.8g}"
+
+
+def trial_key(dataset_name, lr, dropout, fine_tune_mode, seed):
+  return f"{dataset_name}|{fine_tune_mode}|seed{seed}|lr{fmt_float(lr)}|drop{fmt_float(dropout)}"
+
+
+def load_logged_trials(log_path):
+  completed = set()
+  entries = []
+  if not os.path.exists(log_path):
+    return completed, entries
+
+  with open(log_path, 'r', encoding='utf-8') as f:
+    for line in f:
+      line = line.strip()
+      if not line:
+        continue
+      try:
+        item = json.loads(line)
+      except json.JSONDecodeError:
+        continue
+      entries.append(item)
+      if item.get('status') == 'done' and item.get('trial_key'):
+        completed.add(item['trial_key'])
+  return completed, entries
+
+
+def append_search_log(log_path, payload):
+  with open(log_path, 'a', encoding='utf-8') as f:
+    f.write(json.dumps(payload, ensure_ascii=True) + '\n')
+
+
+def make_trial_checkpoint_path(args, dataset_name, lr, dropout):
+  ckpt_dir = os.path.join(args.search_output_dir, 'checkpoints')
+  filename = (
+    f"{dataset_name}_{args.fine_tune_mode}_seed{args.seed}_"
+    f"lr{fmt_float(lr)}_drop{fmt_float(dropout)}.pt"
+  )
+  return os.path.join(ckpt_dir, filename)
 
 
 def train(args):
@@ -299,14 +349,135 @@ def train(args):
 
     train_loss = train_loss / (num_batches)
 
-    train_acc, train_f1, *_ = model_eval(train_dataloader, model, device)
-    dev_acc, dev_f1, *_ = model_eval(dev_dataloader, model, device)
+    train_acc, *_ = model_eval(train_dataloader, model, device)
+    dev_acc, *_ = model_eval(dev_dataloader, model, device)
 
     if dev_acc > best_dev_acc:
       best_dev_acc = dev_acc
       save_model(model, optimizer, args, config, args.filepath)
 
     print(f"Epoch {epoch}: train loss :: {train_loss :.3f}, train acc :: {train_acc :.3f}, dev acc :: {dev_acc :.3f}")
+
+  return {'best_dev_acc': best_dev_acc}
+
+
+def build_dataset_config(dataset_name, args, lr=None, dropout=None):
+  lr = args.lr if lr is None else lr
+  dropout = args.hidden_dropout_prob if dropout is None else dropout
+
+  if dataset_name == 'sst':
+    return SimpleNamespace(
+      filepath='hyperresults/ptfiles/sst-classifier.pt',
+      lr=lr,
+      use_gpu=args.use_gpu,
+      epochs=args.epochs,
+      batch_size=args.batch_size,
+      hidden_dropout_prob=dropout,
+      train='data/ids-sst-train.csv',
+      dev='data/ids-sst-dev.csv',
+      test='data/ids-sst-test-student.csv',
+      fine_tune_mode=args.fine_tune_mode,
+      dev_out='predictions/' + args.fine_tune_mode + '-sst-dev-out.csv',
+      test_out='predictions/' + args.fine_tune_mode + '-sst-test-out.csv'
+    )
+  elif dataset_name == 'cfimdb':
+    return SimpleNamespace(
+      filepath='hyperresults/ptfiles/cfimdb-classifier.pt',
+      lr=lr,
+      use_gpu=args.use_gpu,
+      epochs=args.epochs,
+      batch_size=8,
+      hidden_dropout_prob=dropout,
+      train='data/ids-cfimdb-train.csv',
+      dev='data/ids-cfimdb-dev.csv',
+      test='data/ids-cfimdb-test-student.csv',
+      fine_tune_mode=args.fine_tune_mode,
+      dev_out='predictions/' + args.fine_tune_mode + '-cfimdb-dev-out.csv',
+      test_out='predictions/' + args.fine_tune_mode + '-cfimdb-test-out.csv'
+    )
+
+  raise ValueError(f'Unknown dataset: {dataset_name}')
+
+
+def run_lr_dropout_search(args):
+  lrs = [float(x) for x in args.search_lrs.split(',')]
+  dropouts = [float(x) for x in args.search_dropouts.split(',')]
+  datasets = ['sst', 'cfimdb'] if args.search_dataset == 'both' else [args.search_dataset]
+
+  os.makedirs(args.search_output_dir, exist_ok=True)
+  log_path = os.path.join(args.search_output_dir, f'lr_dropout_trials_seed{args.seed}_{args.fine_tune_mode}.jsonl')
+  completed_keys, historical_entries = load_logged_trials(log_path)
+  results = [x for x in historical_entries if x.get('status') == 'done']
+  if completed_keys:
+    print(f"Loaded {len(completed_keys)} completed trial(s) from {log_path}")
+
+  for dataset_name in datasets:
+    print(f"\n=== Running lr/dropout search on {dataset_name} ===")
+    best_result = None
+    for lr, dropout in itertools.product(lrs, dropouts):
+      key = trial_key(dataset_name, lr, dropout, args.fine_tune_mode, args.seed)
+      if key in completed_keys:
+        print(f"\n[skip done] {key}")
+        continue
+
+      print(f"\n[search] dataset={dataset_name}, lr={lr}, dropout={dropout}")
+      seed_everything(args.seed)
+      run_config = build_dataset_config(dataset_name, args, lr=lr, dropout=dropout)
+      run_config.filepath = make_trial_checkpoint_path(args, dataset_name, lr, dropout)
+
+      try:
+        run_metrics = train(run_config)
+        entry = {
+          'timestamp': datetime.utcnow().isoformat() + 'Z',
+          'status': 'done',
+          'trial_key': key,
+          'dataset': dataset_name,
+          'fine_tune_mode': args.fine_tune_mode,
+          'seed': args.seed,
+          'lr': lr,
+          'dropout': dropout,
+          'checkpoint_path': run_config.filepath,
+          'best_dev_acc': run_metrics['best_dev_acc']
+        }
+        append_search_log(log_path, entry)
+        results.append(entry)
+        completed_keys.add(key)
+        print(f"[trial done] dataset={dataset_name}, lr={lr}, dropout={dropout}, "
+              f"best_dev_acc={entry['best_dev_acc']:.4f}")
+        if best_result is None or entry['best_dev_acc'] > best_result['best_dev_acc']:
+          best_result = entry
+      except Exception as e:
+        fail_entry = {
+          'timestamp': datetime.utcnow().isoformat() + 'Z',
+          'status': 'failed',
+          'trial_key': key,
+          'dataset': dataset_name,
+          'fine_tune_mode': args.fine_tune_mode,
+          'seed': args.seed,
+          'lr': lr,
+          'dropout': dropout,
+          'checkpoint_path': run_config.filepath,
+          'error': str(e)
+        }
+        append_search_log(log_path, fail_entry)
+        print(f"[failed] {key} -> {e}")
+        continue
+
+    dataset_done = [x for x in results if x.get('dataset') == dataset_name and x.get('status') == 'done']
+    if dataset_done:
+      best_result = max(dataset_done, key=lambda x: x['best_dev_acc'])
+    if best_result is None:
+      print(f"[best] {dataset_name}: no successful trial yet.")
+    else:
+      print(f"[best] {dataset_name}: lr={best_result['lr']}, dropout={best_result['dropout']}, "
+            f"dev_acc={best_result['best_dev_acc']:.4f}")
+
+  timestamp = f"seed{args.seed}_{args.fine_tune_mode}"
+  output_path = os.path.join(args.search_output_dir, f'lr_dropout_search_{timestamp}.json')
+  with open(output_path, 'w', encoding='utf-8') as f:
+    json.dump(results, f, indent=2)
+  print(f"\nSaved search results to {output_path}")
+  print(f"Trial log (resume source): {log_path}")
 
 
 def test(args):
@@ -329,7 +500,7 @@ def test(args):
     test_dataloader = DataLoader(test_dataset, shuffle=False, batch_size=args.batch_size,
                                  collate_fn=test_dataset.collate_fn)
 
-    dev_acc, dev_f1, dev_pred, dev_true, dev_sents, dev_sent_ids = model_eval(dev_dataloader, model, device)
+    dev_acc, dev_pred, dev_true, dev_sents, dev_sent_ids = model_eval(dev_dataloader, model, device)
     print('DONE DEV')
 
     test_pred, test_sents, test_sent_ids = model_test_eval(test_dataloader, model, device)
@@ -360,6 +531,18 @@ def get_args():
   parser.add_argument("--hidden_dropout_prob", type=float, default=0.3)
   parser.add_argument("--lr", type=float, help="learning rate, default lr for 'pretrain': 1e-3, 'finetune': 1e-5",
                       default=1e-3)
+  parser.add_argument("--run_hpsearch", action='store_true',
+                      help="Run lr x dropout hyper-parameter search instead of default train/test flow.")
+  # parser.add_argument("--search_lrs", type=str, default="5e-4,1e-3,2e-3,5e-3,1e-2",
+  parser.add_argument("--search_lrs", type=str, default="5e-4,2e-3",
+                      help="Comma-separated learning rates for search.")
+  # parser.add_argument("--search_dropouts", type=str, default="0.0,0.2",
+  parser.add_argument("--search_dropouts", type=str, default="0.05,0.1",
+                      help="Comma-separated dropout rates for search.")
+  parser.add_argument("--search_dataset", type=str, default="sst", choices=("sst", "cfimdb", "both"),
+                      help="Which dataset(s) to run hyper-parameter search on.")
+  parser.add_argument("--search_output_dir", type=str, default="hpsearch_results",
+                      help="Directory to save hyper-parameter search results.")
 
   args = parser.parse_args()
   return args
@@ -369,21 +552,12 @@ if __name__ == "__main__":
   args = get_args()
   seed_everything(args.seed)
 
+  if args.run_hpsearch:
+    run_lr_dropout_search(args)
+    raise SystemExit(0)
+
   print('Training Sentiment Classifier on SST...')
-  config = SimpleNamespace(
-    filepath='sst-classifier.pt',
-    lr=args.lr,
-    use_gpu=args.use_gpu,
-    epochs=args.epochs,
-    batch_size=args.batch_size,
-    hidden_dropout_prob=args.hidden_dropout_prob,
-    train='data/ids-sst-train.csv',
-    dev='data/ids-sst-dev.csv',
-    test='data/ids-sst-test-student.csv',
-    fine_tune_mode=args.fine_tune_mode,
-    dev_out='predictions/' + args.fine_tune_mode + '-sst-dev-out.csv',
-    test_out='predictions/' + args.fine_tune_mode + '-sst-test-out.csv'
-  )
+  config = build_dataset_config('sst', args)
 
   train(config)
 
@@ -391,20 +565,7 @@ if __name__ == "__main__":
   test(config)
 
   print('Training Sentiment Classifier on cfimdb...')
-  config = SimpleNamespace(
-    filepath='cfimdb-classifier.pt',
-    lr=args.lr,
-    use_gpu=args.use_gpu,
-    epochs=args.epochs,
-    batch_size=8,
-    hidden_dropout_prob=args.hidden_dropout_prob,
-    train='data/ids-cfimdb-train.csv',
-    dev='data/ids-cfimdb-dev.csv',
-    test='data/ids-cfimdb-test-student.csv',
-    fine_tune_mode=args.fine_tune_mode,
-    dev_out='predictions/' + args.fine_tune_mode + '-cfimdb-dev-out.csv',
-    test_out='predictions/' + args.fine_tune_mode + '-cfimdb-test-out.csv'
-  )
+  config = build_dataset_config('cfimdb', args)
 
   train(config)
 

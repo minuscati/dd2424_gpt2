@@ -4,6 +4,8 @@ import torch.nn.functional as F
 
 from modules.attention import CausalSelfAttention
 
+
+
 class GPT2Layer(nn.Module):
   def __init__(self, config):
     super().__init__()
@@ -29,8 +31,10 @@ class GPT2Layer(nn.Module):
         before it is added to the sub-layer input. WE DO NOT APPLY THE LAYER NORM
         IN THIS FUNCTION.
     """
-    ### YOUR CODE HERE
-    raise NotImplementedError
+    transformed_output = dense_layer(output)
+    transformed_output = dropout(transformed_output)
+    return input + transformed_output
+
 
 
   def forward(self, hidden_states, attention_mask):
@@ -41,7 +45,12 @@ class GPT2Layer(nn.Module):
            - Apply dropout, residual connection, and layer normalization according to the plot in the assignment. (Use self.add)
            - A feed-forward layer that applies transformations to further refine the hidden states.
     """
-
-    ### YOUR CODE HERE
-    raise NotImplementedError
-
+    normed = self.attention_layer_norm(hidden_states)
+    atten_out = self.self_attention(normed, attention_mask)
+    hidden_states = self.add(hidden_states, atten_out, self.attention_dense, self.attention_dropout)
+    # FFN
+    normed = self.out_layer_norm(hidden_states)
+    ffn_out = self.interm_dense(normed)
+    ffn_out = F.gelu(ffn_out)
+    hidden_states = self.add(hidden_states, ffn_out, self.out_dense, self.out_dropout)
+    return hidden_states
