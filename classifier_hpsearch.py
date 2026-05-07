@@ -285,6 +285,16 @@ def append_search_log(log_path, payload):
     f.write(json.dumps(payload, ensure_ascii=True) + '\n')
 
 
+def append_epoch_log(log_path, payload):
+  if not log_path:
+    return
+  output_dir = os.path.dirname(log_path)
+  if output_dir:
+    os.makedirs(output_dir, exist_ok=True)
+  with open(log_path, 'a', encoding='utf-8') as f:
+    f.write(json.dumps(payload, ensure_ascii=True) + '\n')
+
+
 def make_trial_checkpoint_path(args, dataset_name, lr, dropout):
   ckpt_dir = os.path.join(args.search_output_dir, 'checkpoints')
   filename = (
@@ -294,7 +304,7 @@ def make_trial_checkpoint_path(args, dataset_name, lr, dropout):
   return os.path.join(ckpt_dir, filename)
 
 
-def train(args):
+def train(args, trial_meta=None, epoch_log_path=None):
   device = torch.device('cuda') if args.use_gpu else torch.device('cpu')
   # Create the data and its corresponding datasets and dataloader.
   train_data, num_labels = load_data(args.train, 'train')
@@ -323,6 +333,7 @@ def train(args):
   lr = args.lr
   optimizer = AdamW(model.parameters(), lr=lr)
   best_dev_acc = 0
+  epoch_metrics = []
 
   # Run for the specified number of epochs.
   for epoch in range(args.epochs):
@@ -356,9 +367,21 @@ def train(args):
       best_dev_acc = dev_acc
       save_model(model, optimizer, args, config, args.filepath)
 
+    epoch_entry = {
+      'timestamp': datetime.utcnow().isoformat() + 'Z',
+      'epoch': epoch,
+      'train_loss': train_loss,
+      'train_acc': train_acc,
+      'dev_acc': dev_acc
+    }
+    if trial_meta:
+      epoch_entry.update(trial_meta)
+    epoch_metrics.append(epoch_entry)
+    append_epoch_log(epoch_log_path, epoch_entry)
+
     print(f"Epoch {epoch}: train loss :: {train_loss :.3f}, train acc :: {train_acc :.3f}, dev acc :: {dev_acc :.3f}")
 
-  return {'best_dev_acc': best_dev_acc}
+  return {'best_dev_acc': best_dev_acc, 'epoch_metrics': epoch_metrics}
 
 
 def build_dataset_config(dataset_name, args, lr=None, dropout=None):
@@ -406,6 +429,7 @@ def run_lr_dropout_search(args):
 
   os.makedirs(args.search_output_dir, exist_ok=True)
   log_path = os.path.join(args.search_output_dir, f'lr_dropout_trials_seed{args.seed}_{args.fine_tune_mode}.jsonl')
+  epoch_log_path = os.path.join(args.search_output_dir, f'epoch_metrics_seed{args.seed}_{args.fine_tune_mode}.jsonl')
   completed_keys, historical_entries = load_logged_trials(log_path)
   results = [x for x in historical_entries if x.get('status') == 'done']
   if completed_keys:
@@ -426,7 +450,18 @@ def run_lr_dropout_search(args):
       run_config.filepath = make_trial_checkpoint_path(args, dataset_name, lr, dropout)
 
       try:
-        run_metrics = train(run_config)
+        run_metrics = train(
+          run_config,
+          trial_meta={
+            'trial_key': key,
+            'dataset': dataset_name,
+            'fine_tune_mode': args.fine_tune_mode,
+            'seed': args.seed,
+            'lr': lr,
+            'dropout': dropout
+          },
+          epoch_log_path=epoch_log_path
+        )
         entry = {
           'timestamp': datetime.utcnow().isoformat() + 'Z',
           'status': 'done',
