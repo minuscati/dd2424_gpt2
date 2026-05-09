@@ -8,7 +8,7 @@ import random, numpy as np, argparse
 import itertools
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from types import SimpleNamespace
 import csv
 
@@ -414,7 +414,7 @@ def train(args, trial_meta=None, epoch_log_path=None):
       epochs_without_improve += 1
 
     epoch_entry = {
-      'timestamp': datetime.utcnow().isoformat() + 'Z',
+      'timestamp': datetime.now(timezone.utc).isoformat(),
       'epoch': epoch,
       'train_loss': train_loss,
       'train_acc': train_acc,
@@ -470,6 +470,8 @@ def build_dataset_config(dataset_name, args, lr=None, dropout=None):
       fine_tune_mode=args.fine_tune_mode,
       unfreeze_last_n=args.unfreeze_last_n,
       train_embeddings=args.train_embeddings,
+      early_stop_patience=args.early_stop_patience,
+      early_stop_min_delta=args.early_stop_min_delta,
       epoch_log_path=epoch_log_path,
       dev_out='predictions/' + args.fine_tune_mode + '-sst-dev-out.csv',
       test_out='predictions/' + args.fine_tune_mode + '-sst-test-out.csv'
@@ -489,6 +491,8 @@ def build_dataset_config(dataset_name, args, lr=None, dropout=None):
       fine_tune_mode=args.fine_tune_mode,
       unfreeze_last_n=args.unfreeze_last_n,
       train_embeddings=args.train_embeddings,
+      early_stop_patience=args.early_stop_patience,
+      early_stop_min_delta=args.early_stop_min_delta,
       epoch_log_path=epoch_log_path,
       dev_out='predictions/' + args.fine_tune_mode + '-cfimdb-dev-out.csv',
       test_out='predictions/' + args.fine_tune_mode + '-cfimdb-test-out.csv'
@@ -544,7 +548,7 @@ def run_lr_dropout_search(args):
           epoch_log_path=epoch_log_path
         )
         entry = {
-          'timestamp': datetime.utcnow().isoformat() + 'Z',
+          'timestamp': datetime.now(timezone.utc).isoformat(),
           'status': 'done',
           'trial_key': key,
           'dataset': dataset_name,
@@ -569,7 +573,7 @@ def run_lr_dropout_search(args):
           best_result = entry
       except Exception as e:
         fail_entry = {
-          'timestamp': datetime.utcnow().isoformat() + 'Z',
+          'timestamp': datetime.now(timezone.utc).isoformat(),
           'status': 'failed',
           'trial_key': key,
           'dataset': dataset_name,
