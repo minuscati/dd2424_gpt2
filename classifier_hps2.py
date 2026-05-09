@@ -652,7 +652,7 @@ def get_args():
   parser.add_argument("--use_gpu", action='store_true')
 
   parser.add_argument("--batch_size", help='sst: 64, cfimdb: 8 can fit a 12GB GPU', type=int, default=8)
-  parser.add_argument("--hidden_dropout_prob", type=float, default=0.3)
+  parser.add_argument("--hidden_dropout_prob", type=float, default=0.0)
   parser.add_argument("--weight_decay", type=float, default=0.0,
                       help="Weight decay used by AdamW.")
   parser.add_argument("--unfreeze_last_n", type=int, default=None,
