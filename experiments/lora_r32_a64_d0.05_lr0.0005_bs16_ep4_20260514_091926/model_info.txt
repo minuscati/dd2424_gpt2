@@ -1,3 +1,0 @@
-Trainable params: 5,309,954
-Total params: 130,341,892
-Trainable ratio: 4.0739%
