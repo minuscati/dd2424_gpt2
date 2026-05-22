@@ -31,10 +31,33 @@ class CausalSelfAttention(nn.Module):
     proj = rearrange(proj, 'b t h d -> b h t d')
     return proj
 
-  def attention(self, key, query, value, attention_mask):
+  # def attention(self, key, query, value, attention_mask):
 
-    ### YOUR CODE HERE
-    raise NotImplementedError
+  #   ### YOUR CODE HERE
+  #   raise NotImplementedError
+
+  def attention(self, key, query, value, attention_mask):
+      # key, query, value: (B, num_heads, T, head_dim)
+      B, num_heads, T, head_dim = query.shape
+      dk = query.size(-1)
+
+
+      scores = torch.matmul(query, key.transpose(-2, -1)) / (dk ** 0.5)
+
+      scores = scores + attention_mask 
+
+
+      causal_mask = torch.triu(torch.ones(T, T, dtype=torch.bool, device=scores.device), diagonal=1)
+
+      scores = scores.masked_fill(causal_mask, float('-inf'))
+
+
+      attn_weights = torch.softmax(scores, dim=-1)
+      attn_weights = self.dropout(attn_weights)
+      output = torch.matmul(attn_weights, value)
+      output = rearrange(output, 'b h t d -> b t (h d)')
+
+      return output
 
 
   def forward(self, hidden_states, attention_mask):

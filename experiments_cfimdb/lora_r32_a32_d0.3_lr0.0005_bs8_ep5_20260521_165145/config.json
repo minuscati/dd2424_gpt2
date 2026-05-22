@@ -1,0 +1,12 @@
+{
+    "seed": 11711,
+    "epochs": 5,
+    "fine_tune_mode": "lora",
+    "use_gpu": true,
+    "batch_size": 8,
+    "hidden_dropout_prob": 0.2,
+    "lr": 0.0005,
+    "lora_r": 32,
+    "lora_alpha": 32,
+    "lora_dropout": 0.3
+}

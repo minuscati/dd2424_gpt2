@@ -1,0 +1,75 @@
+================================================================================
+Experiment Created
+================================================================================
+Save Directory:
+experiments\lora_r32_a64_d0.05_lr0.0005_bs16_ep4_20260514_091926
+
+Arguments:
+seed: 11711
+epochs: 4
+fine_tune_mode: lora
+use_gpu: True
+batch_size: 16
+hidden_dropout_prob: 0.1
+lr: 0.0005
+lora_r: 32
+lora_alpha: 64
+lora_dropout: 0.05
+================================================================================
+Config saved to:
+experiments\lora_r32_a64_d0.05_lr0.0005_bs16_ep4_20260514_091926\config.json
+Log file saved to:
+experiments\lora_r32_a64_d0.05_lr0.0005_bs16_ep4_20260514_091926\train.log
+================================================================================
+Training Sentiment Classifier on SST...
+load 8544 data from data/ids-sst-train.csv
+load 1101 data from data/ids-sst-dev.csv
+
+================================================================================
+LoRA Model Info
+================================================================================
+trainable params: 5,312,261 || all params: 130,346,506 || trainable%: 4.0755
+Trainable params : 5,312,261
+Total params     : 130,346,506
+Trainable ratio  : 4.0755%
+Model info saved to:
+experiments\lora_r32_a64_d0.05_lr0.0005_bs16_ep4_20260514_091926\model_info.txt
+save the model to experiments\lora_r32_a64_d0.05_lr0.0005_bs16_ep4_20260514_091926\sst-all-classifier.pt
+Epoch 0: train loss :: 1.332, train acc :: 0.550, dev acc :: 0.495
+save the model to experiments\lora_r32_a64_d0.05_lr0.0005_bs16_ep4_20260514_091926\sst-all-classifier.pt
+Epoch 1: train loss :: 1.126, train acc :: 0.576, dev acc :: 0.502
+save the model to experiments\lora_r32_a64_d0.05_lr0.0005_bs16_ep4_20260514_091926\sst-all-classifier.pt
+Epoch 2: train loss :: 1.073, train acc :: 0.648, dev acc :: 0.505
+Epoch 3: train loss :: 0.951, train acc :: 0.714, dev acc :: 0.488
+Evaluating on SST...
+load model from experiments\lora_r32_a64_d0.05_lr0.0005_bs16_ep4_20260514_091926\sst-all-classifier.pt
+load 1101 data from data/ids-sst-dev.csv
+DONE DEV
+DONE Test
+dev acc :: 0.505
+Training Sentiment Classifier on cfimdb...
+load 1707 data from data/ids-cfimdb-train.csv
+load 245 data from data/ids-cfimdb-dev.csv
+
+================================================================================
+LoRA Model Info
+================================================================================
+trainable params: 5,309,954 || all params: 130,341,892 || trainable%: 4.0739
+Trainable params : 5,309,954
+Total params     : 130,341,892
+Trainable ratio  : 4.0739%
+Model info saved to:
+experiments\lora_r32_a64_d0.05_lr0.0005_bs16_ep4_20260514_091926\model_info.txt
+save the model to experiments\lora_r32_a64_d0.05_lr0.0005_bs16_ep4_20260514_091926\cfimdb-all-classifier.pt
+Epoch 0: train loss :: 0.579, train acc :: 0.958, dev acc :: 0.947
+save the model to experiments\lora_r32_a64_d0.05_lr0.0005_bs16_ep4_20260514_091926\cfimdb-all-classifier.pt
+Epoch 1: train loss :: 0.138, train acc :: 0.977, dev acc :: 0.951
+Epoch 2: train loss :: 0.096, train acc :: 0.981, dev acc :: 0.951
+save the model to experiments\lora_r32_a64_d0.05_lr0.0005_bs16_ep4_20260514_091926\cfimdb-all-classifier.pt
+Epoch 3: train loss :: 0.093, train acc :: 0.984, dev acc :: 0.976
+Evaluating on cfimdb...
+load model from experiments\lora_r32_a64_d0.05_lr0.0005_bs16_ep4_20260514_091926\cfimdb-all-classifier.pt
+load 245 data from data/ids-cfimdb-dev.csv
+DONE DEV
+DONE Test
+dev acc :: 0.976

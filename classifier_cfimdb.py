@@ -63,8 +63,7 @@ def setup_experiment(args):
             f"_{timestamp}"
         )
 
-  
-    save_dir = os.path.join("experiments", exp_name)
+    save_dir = os.path.join("experiments_cfimdb", exp_name)
 
     os.makedirs(save_dir, exist_ok=True)
     os.makedirs(os.path.join(save_dir, "predictions"), exist_ok=True)
@@ -149,6 +148,7 @@ class GPT2SentimentClassifier(torch.nn.Module):
     self.classifier = torch.nn.Linear(config.hidden_size, self.num_labels)
 
     # raise NotImplementedError
+
 
 
 
@@ -375,23 +375,23 @@ def train(args):
     lora_config = LoraConfig(
         # r=16,
         # lora_alpha=32,
-        # target_modules=["query", "value"], 
+        target_modules=["query", "value"], 
         # target_modules=["query", "key", "value", "attention_dense", "interm_dense", "out_dense"],
-        target_modules=["query", "key", "value", "attention_dense", "interm_dense", "out_dense"],
+        # target_modules=["query", "key", "value", "attention_dense", "interm_dense", "out_dense"],
         r=args.lora_r,
         lora_alpha=args.lora_alpha,
         lora_dropout=args.lora_dropout,
         # lora_dropout=0.2,
         bias="none",
-        modules_to_save=["classifier"] # ⚠️ 极其重要：把你的分类头加入训练
+        modules_to_save=["classifier"] 
     )
     model = get_peft_model(model, lora_config)
     print("\n" + "=" * 80)
     print("LoRA Model Info")
     print("=" * 80)
 
-    model.print_trainable_parameters()
 
+    model.print_trainable_parameters()
 
     trainable_params = sum(
         p.numel() for p in model.parameters()
@@ -407,7 +407,6 @@ def train(args):
     print(f"Trainable params : {trainable_params:,}")
     print(f"Total params     : {total_params:,}")
     print(f"Trainable ratio  : {ratio:.4f}%")
-
 
     model_info_path = os.path.join(args.save_dir, "model_info.txt")
 
@@ -484,7 +483,8 @@ def test(args):
     if config.fine_tune_mode == 'lora':
         lora_config = LoraConfig(
 
-            target_modules=["query", "key", "value", "attention_dense", "interm_dense", "out_dense"],
+            # target_modules=["query", "key", "value", "attention_dense", "interm_dense", "out_dense"],
+            target_modules=["query", "value"],
             r=args.lora_r,
             lora_alpha=args.lora_alpha,
             lora_dropout=args.lora_dropout,
@@ -492,7 +492,6 @@ def test(args):
             modules_to_save=["classifier"]
         )
         model = get_peft_model(model, lora_config)
-    # ======================================================================
 
     model.load_state_dict(saved['model'])
     model = model.to(device)
@@ -566,30 +565,6 @@ if __name__ == "__main__":
   args.save_dir = save_dir
   seed_everything(args.seed)
 
-  print('Training Sentiment Classifier on SST...')
-  config = SimpleNamespace(
-      filepath=os.path.join(save_dir, 'sst-all-classifier.pt'),
-      lr=args.lr,
-      use_gpu=args.use_gpu,
-      epochs=args.epochs,
-      batch_size=args.batch_size,
-      hidden_dropout_prob=args.hidden_dropout_prob,
-      train='data/ids-sst-train.csv',
-      dev='data/ids-sst-dev.csv',
-      test='data/ids-sst-test-student.csv',
-      fine_tune_mode=args.fine_tune_mode,
-      dev_out=os.path.join(save_dir, 'predictions', 'sst-dev.csv'),
-      test_out=os.path.join(save_dir, 'predictions', 'sst-test.csv'),
-      lora_r=args.lora_r,
-      lora_alpha=args.lora_alpha,
-      lora_dropout=args.lora_dropout,
-      save_dir=args.save_dir 
-  )
-
-  train(config)
-
-  print('Evaluating on SST...')
-  test(config)
 
   print('Training Sentiment Classifier on cfimdb...')
   config = SimpleNamespace(

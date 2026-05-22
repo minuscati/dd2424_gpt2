@@ -17,11 +17,7 @@ from sklearn.metrics import f1_score, accuracy_score
 from models.gpt2 import GPT2Model
 from optimizer import AdamW
 from tqdm import tqdm
-from peft import LoraConfig, get_peft_model
 
-import os
-import sys
-from datetime import datetime
 TQDM_DISABLE = False
 
 
@@ -34,82 +30,6 @@ def seed_everything(seed=11711):
   torch.cuda.manual_seed_all(seed)
   torch.backends.cudnn.benchmark = False
   torch.backends.cudnn.deterministic = True
-
-def setup_experiment(args):
-    import os
-    import sys
-    import json
-    from datetime import datetime
-
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-    if args.fine_tune_mode == "lora":
-        exp_name = (
-            f"{args.fine_tune_mode}"
-            f"_r{args.lora_r}"
-            f"_a{args.lora_alpha}"
-            f"_d{args.lora_dropout}"
-            f"_lr{args.lr}"
-            f"_bs{args.batch_size}"
-            f"_ep{args.epochs}"
-            f"_{timestamp}"
-        )
-    else:
-        exp_name = (
-            f"{args.fine_tune_mode}"
-            f"_lr{args.lr}"
-            f"_bs{args.batch_size}"
-            f"_ep{args.epochs}"
-            f"_{timestamp}"
-        )
-
-  
-    save_dir = os.path.join("experiments", exp_name)
-
-    os.makedirs(save_dir, exist_ok=True)
-    os.makedirs(os.path.join(save_dir, "predictions"), exist_ok=True)
-    os.makedirs(os.path.join(save_dir, "checkpoints"), exist_ok=True)
-
-    log_path = os.path.join(save_dir, "train.log")
-
-    class Logger(object):
-        def __init__(self, log_file):
-            self.terminal = sys.stdout
-            self.log = open(log_file, "a", encoding="utf-8")
-
-        def write(self, message):
-            self.terminal.write(message)
-            self.log.write(message)
-
-        def flush(self):
-            self.terminal.flush()
-            self.log.flush()
-
-    sys.stdout = Logger(log_path)
-
-    print("=" * 80)
-    print("Experiment Created")
-    print("=" * 80)
-
-    print(f"Save Directory:\n{save_dir}\n")
-
-    print("Arguments:")
-    for k, v in vars(args).items():
-        print(f"{k}: {v}")
-
-    print("=" * 80)
-
-    config_path = os.path.join(save_dir, "config.json")
-
-    with open(config_path, "w", encoding="utf-8") as f:
-        json.dump(vars(args), f, indent=4)
-
-    print(f"Config saved to:\n{config_path}")
-    print(f"Log file saved to:\n{log_path}")
-
-    print("=" * 80)
-
-    return save_dir
 
 
 class GPT2SentimentClassifier(torch.nn.Module):
@@ -125,18 +45,10 @@ class GPT2SentimentClassifier(torch.nn.Module):
     self.num_labels = config.num_labels
     self.gpt = GPT2Model.from_pretrained()
 
-    # # Pretrain mode does not require updating GPT paramters.
-    # assert config.fine_tune_mode in ["last-linear-layer", "full-model"]
-    # for param in self.gpt.parameters():
-    #   if config.fine_tune_mode == 'last-linear-layer':
-    #     param.requires_grad = False
-    #   elif config.fine_tune_mode == 'full-model':
-    #     param.requires_grad = True
-
     # Pretrain mode does not require updating GPT paramters.
-    assert config.fine_tune_mode in ["last-linear-layer", "full-model", "lora"] # 加了 lora
+    assert config.fine_tune_mode in ["last-linear-layer", "full-model"]
     for param in self.gpt.parameters():
-      if config.fine_tune_mode in ['last-linear-layer', 'lora']: # 加了 lora
+      if config.fine_tune_mode == 'last-linear-layer':
         param.requires_grad = False
       elif config.fine_tune_mode == 'full-model':
         param.requires_grad = True
@@ -151,25 +63,29 @@ class GPT2SentimentClassifier(torch.nn.Module):
     # raise NotImplementedError
 
 
+  # def forward(self, input_ids, attention_mask):
+  #   '''Takes a batch of sentences and returns logits for sentiment classes'''
+
+  #   ### TODO: The final GPT contextualized embedding is the hidden state of the last token.
+  #   ###       HINT: You should consider what is an appropriate return value given that
+  #   ###       the training loop currently uses F.cross_entropy as the loss function.
+  #   ### YOUR CODE HERE
+  #   raise NotImplementedError
 
   def forward(self, input_ids, attention_mask):
+    '''Takes a batch of sentences and returns logits for sentiment classes'''
+    gpt_outputs = self.gpt(input_ids, attention_mask)
+    
+    last_token_state = gpt_outputs['last_token']
 
-      gpt_outputs = self.gpt(input_ids, attention_mask)
+    x = self.dropout(last_token_state)
+    logits = self.classifier(x)
 
-      hidden_states = gpt_outputs['last_hidden_state']
+    return logits
 
-      seq_lengths = attention_mask.sum(dim=1) - 1
 
-      last_token_state = hidden_states[
-          torch.arange(hidden_states.size(0)),
-          seq_lengths
-      ]
 
-      x = self.dropout(last_token_state)
 
-      logits = self.classifier(x)
-
-      return logits
 
 class SentimentDataset(Dataset):
   def __init__(self, dataset, args):
@@ -251,13 +167,13 @@ def load_data(filename, flag='train'):
   num_labels = {}
   data = []
   if flag == 'test':
-    with open(filename, 'r',encoding='utf-8') as fp:
+    with open(filename, 'r') as fp:
       for record in csv.DictReader(fp, delimiter='\t'):
         sent = record['sentence'].lower().strip()
         sent_id = record['id'].lower().strip()
         data.append((sent, sent_id))
   else:
-    with open(filename, 'r',encoding='utf-8') as fp:
+    with open(filename, 'r') as fp:
       for record in csv.DictReader(fp, delimiter='\t'):
         sent = record['sentence'].lower().strip()
         sent_id = record['id'].lower().strip()
@@ -366,67 +282,10 @@ def train(args):
   config = SimpleNamespace(**config)
 
   model = GPT2SentimentClassifier(config)
-
-  # config = SimpleNamespace(**config)
-
-  # model = GPT2SentimentClassifier(config)
-
-  if args.fine_tune_mode == 'lora':
-    lora_config = LoraConfig(
-        # r=16,
-        # lora_alpha=32,
-        # target_modules=["query", "value"], 
-        # target_modules=["query", "key", "value", "attention_dense", "interm_dense", "out_dense"],
-        target_modules=["query", "key", "value", "attention_dense", "interm_dense", "out_dense"],
-        r=args.lora_r,
-        lora_alpha=args.lora_alpha,
-        lora_dropout=args.lora_dropout,
-        # lora_dropout=0.2,
-        bias="none",
-        modules_to_save=["classifier"] # ⚠️ 极其重要：把你的分类头加入训练
-    )
-    model = get_peft_model(model, lora_config)
-    print("\n" + "=" * 80)
-    print("LoRA Model Info")
-    print("=" * 80)
-
-    model.print_trainable_parameters()
-
-
-    trainable_params = sum(
-        p.numel() for p in model.parameters()
-        if p.requires_grad
-    )
-
-    total_params = sum(
-        p.numel() for p in model.parameters()
-    )
-
-    ratio = 100 * trainable_params / total_params
-
-    print(f"Trainable params : {trainable_params:,}")
-    print(f"Total params     : {total_params:,}")
-    print(f"Trainable ratio  : {ratio:.4f}%")
-
-
-    model_info_path = os.path.join(args.save_dir, "model_info.txt")
-
-    with open(model_info_path, "w") as f:
-        f.write(f"Trainable params: {trainable_params:,}\n")
-        f.write(f"Total params: {total_params:,}\n")
-        f.write(f"Trainable ratio: {ratio:.4f}%\n")
-
-    print(f"Model info saved to:\n{model_info_path}")
-
   model = model.to(device)
 
   lr = args.lr
-  optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
-
-  # model = model.to(device)
-
-  # lr = args.lr
-  # optimizer = AdamW(model.parameters(), lr=lr)
+  optimizer = AdamW(model.parameters(), lr=lr)
   best_dev_acc = 0
 
   # Run for the specified number of epochs.
@@ -468,41 +327,11 @@ def test(args):
   with torch.no_grad():
     device = torch.device('cuda') if args.use_gpu else torch.device('cpu')
     # saved = torch.load(args.filepath)
-    # saved = torch.load(args.filepath, weights_only=False)
-    # config = saved['model_config']
-    # model = GPT2SentimentClassifier(config)
-    # model.load_state_dict(saved['model'])
-    # model = model.to(device)
-
-
-
-
     saved = torch.load(args.filepath, weights_only=False)
     config = saved['model_config']
     model = GPT2SentimentClassifier(config)
-    
-    if config.fine_tune_mode == 'lora':
-        lora_config = LoraConfig(
-
-            target_modules=["query", "key", "value", "attention_dense", "interm_dense", "out_dense"],
-            r=args.lora_r,
-            lora_alpha=args.lora_alpha,
-            lora_dropout=args.lora_dropout,
-            bias="none",
-            modules_to_save=["classifier"]
-        )
-        model = get_peft_model(model, lora_config)
-    # ======================================================================
-
     model.load_state_dict(saved['model'])
     model = model.to(device)
-
-
-
-
-
-
-
     print(f"load model from {args.filepath}")
 
     dev_data = load_data(args.dev, 'valid')
@@ -537,24 +366,15 @@ def get_args():
   parser = argparse.ArgumentParser()
   parser.add_argument("--seed", type=int, default=11711)
   parser.add_argument("--epochs", type=int, default=10)
-  # parser.add_argument("--fine-tune-mode", type=str,
-  #                     help='last-linear-layer: the GPT parameters are frozen and the task specific head parameters are updated; full-model: GPT parameters are updated as well',
-  #                     choices=('last-linear-layer', 'full-model'), default="last-linear-layer")
-  
   parser.add_argument("--fine-tune-mode", type=str,
-                      help='last-linear-layer: ..., full-model: ..., lora: use PEFT LoRA',
-                      choices=('last-linear-layer', 'full-model', 'lora'), default="last-linear-layer")
-  
+                      help='last-linear-layer: the GPT parameters are frozen and the task specific head parameters are updated; full-model: GPT parameters are updated as well',
+                      choices=('last-linear-layer', 'full-model'), default="last-linear-layer")
   parser.add_argument("--use_gpu", action='store_true')
 
   parser.add_argument("--batch_size", help='sst: 64, cfimdb: 8 can fit a 12GB GPU', type=int, default=8)
   parser.add_argument("--hidden_dropout_prob", type=float, default=0.3)
   parser.add_argument("--lr", type=float, help="learning rate, default lr for 'pretrain': 1e-3, 'finetune': 1e-5",
                       default=1e-3)
-  
-  parser.add_argument("--lora_r", type=int, default=16)
-  parser.add_argument("--lora_alpha", type=int, default=32)
-  parser.add_argument("--lora_dropout", type=float, default=0.2)
 
   args = parser.parse_args()
   return args
@@ -562,28 +382,22 @@ def get_args():
 
 if __name__ == "__main__":
   args = get_args()
-  save_dir = setup_experiment(args)
-  args.save_dir = save_dir
   seed_everything(args.seed)
 
   print('Training Sentiment Classifier on SST...')
   config = SimpleNamespace(
-      filepath=os.path.join(save_dir, 'sst-all-classifier.pt'),
-      lr=args.lr,
-      use_gpu=args.use_gpu,
-      epochs=args.epochs,
-      batch_size=args.batch_size,
-      hidden_dropout_prob=args.hidden_dropout_prob,
-      train='data/ids-sst-train.csv',
-      dev='data/ids-sst-dev.csv',
-      test='data/ids-sst-test-student.csv',
-      fine_tune_mode=args.fine_tune_mode,
-      dev_out=os.path.join(save_dir, 'predictions', 'sst-dev.csv'),
-      test_out=os.path.join(save_dir, 'predictions', 'sst-test.csv'),
-      lora_r=args.lora_r,
-      lora_alpha=args.lora_alpha,
-      lora_dropout=args.lora_dropout,
-      save_dir=args.save_dir 
+    filepath='sst-classifier.pt',
+    lr=args.lr,
+    use_gpu=args.use_gpu,
+    epochs=args.epochs,
+    batch_size=args.batch_size,
+    hidden_dropout_prob=args.hidden_dropout_prob,
+    train='data/ids-sst-train.csv',
+    dev='data/ids-sst-dev.csv',
+    test='data/ids-sst-test-student.csv',
+    fine_tune_mode=args.fine_tune_mode,
+    dev_out='predictions/' + args.fine_tune_mode + '-sst-dev-out.csv',
+    test_out='predictions/' + args.fine_tune_mode + '-sst-test-out.csv'
   )
 
   train(config)
@@ -593,7 +407,7 @@ if __name__ == "__main__":
 
   print('Training Sentiment Classifier on cfimdb...')
   config = SimpleNamespace(
-    filepath=os.path.join(save_dir, 'cfimdb-all-classifier.pt'),
+    filepath='cfimdb-classifier.pt',
     lr=args.lr,
     use_gpu=args.use_gpu,
     epochs=args.epochs,
@@ -603,12 +417,8 @@ if __name__ == "__main__":
     dev='data/ids-cfimdb-dev.csv',
     test='data/ids-cfimdb-test-student.csv',
     fine_tune_mode=args.fine_tune_mode,
-    dev_out=os.path.join(save_dir, 'predictions', 'cfimdb-dev.csv'),
-    test_out=os.path.join(save_dir, 'predictions', 'cfimdb-test.csv'),
-    lora_r=args.lora_r,
-    lora_alpha=args.lora_alpha,
-    lora_dropout=args.lora_dropout,
-    save_dir=args.save_dir
+    dev_out='predictions/' + args.fine_tune_mode + '-cfimdb-dev-out.csv',
+    test_out='predictions/' + args.fine_tune_mode + '-cfimdb-test-out.csv'
   )
 
   train(config)

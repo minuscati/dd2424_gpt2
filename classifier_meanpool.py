@@ -41,8 +41,10 @@ def setup_experiment(args):
     import json
     from datetime import datetime
 
+    # ===== 创建时间戳 =====
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
+    # ===== 实验名字 =====
     if args.fine_tune_mode == "lora":
         exp_name = (
             f"{args.fine_tune_mode}"
@@ -63,15 +65,17 @@ def setup_experiment(args):
             f"_{timestamp}"
         )
 
-  
+    # ===== 创建实验目录 =====
     save_dir = os.path.join("experiments", exp_name)
 
     os.makedirs(save_dir, exist_ok=True)
     os.makedirs(os.path.join(save_dir, "predictions"), exist_ok=True)
     os.makedirs(os.path.join(save_dir, "checkpoints"), exist_ok=True)
 
+    # ===== log 文件 =====
     log_path = os.path.join(save_dir, "train.log")
 
+    # ===== Logger =====
     class Logger(object):
         def __init__(self, log_file):
             self.terminal = sys.stdout
@@ -85,8 +89,10 @@ def setup_experiment(args):
             self.terminal.flush()
             self.log.flush()
 
+    # ===== 保存 terminal 输出 =====
     sys.stdout = Logger(log_path)
 
+    # ===== 打印实验信息 =====
     print("=" * 80)
     print("Experiment Created")
     print("=" * 80)
@@ -99,6 +105,7 @@ def setup_experiment(args):
 
     print("=" * 80)
 
+    # ===== 保存 config.json =====
     config_path = os.path.join(save_dir, "config.json")
 
     with open(config_path, "w", encoding="utf-8") as f:
@@ -152,24 +159,67 @@ class GPT2SentimentClassifier(torch.nn.Module):
 
 
 
+  # def forward(self, input_ids, attention_mask):
+  #   '''Takes a batch of sentences and returns logits for sentiment classes'''
+
+  #   # 1. 跑一遍 GPT-2 拿到输出字典
+  #   gpt_outputs = self.gpt(input_ids, attention_mask)
+    
+  #   # 2. 提取最后一个 token 的上下文表示 (表示整个句子)
+  #   last_token_state = gpt_outputs['last_token']
+    
+  #   # 3. 依次通过 Dropout 和 线性分类层
+  #   x = self.dropout(last_token_state)
+  #   logits = self.classifier(x)
+    
+  #   # 返回未经 softmax 的 logits (因为训练循环里用了 F.cross_entropy)
+  #   return logits
+
+
+#   def forward(self, input_ids, attention_mask):
+
+#       gpt_outputs = self.gpt(input_ids, attention_mask)
+
+#       hidden_states = gpt_outputs['last_hidden_state']
+
+#       seq_lengths = attention_mask.sum(dim=1) - 1
+
+#       last_token_state = hidden_states[
+#           torch.arange(hidden_states.size(0)),
+#           seq_lengths
+#       ]
+
+#       x = self.dropout(last_token_state)
+
+#       logits = self.classifier(x)
+
+#       return logits
+  
+  # new forward for mean pooling
   def forward(self, input_ids, attention_mask):
 
-      gpt_outputs = self.gpt(input_ids, attention_mask)
+    gpt_outputs = self.gpt(input_ids, attention_mask)
 
-      hidden_states = gpt_outputs['last_hidden_state']
+    hidden_states = gpt_outputs['last_hidden_state']
 
-      seq_lengths = attention_mask.sum(dim=1) - 1
+    # [B, T, H]
+    mask = attention_mask.unsqueeze(-1)
 
-      last_token_state = hidden_states[
-          torch.arange(hidden_states.size(0)),
-          seq_lengths
-      ]
+    # padding 部分清零
+    masked_hidden = hidden_states * mask
 
-      x = self.dropout(last_token_state)
+    # mean pooling
+    sum_hidden = masked_hidden.sum(dim=1)
 
-      logits = self.classifier(x)
+    lengths = mask.sum(dim=1)
 
-      return logits
+    pooled = sum_hidden / lengths
+
+    x = self.dropout(pooled)
+
+    logits = self.classifier(x)
+
+    return logits
 
 class SentimentDataset(Dataset):
   def __init__(self, dataset, args):
@@ -370,12 +420,13 @@ def train(args):
   # config = SimpleNamespace(**config)
 
   # model = GPT2SentimentClassifier(config)
-
+  
+  # === 新增：注入 LoRA 模块 ===
   if args.fine_tune_mode == 'lora':
     lora_config = LoraConfig(
         # r=16,
         # lora_alpha=32,
-        # target_modules=["query", "value"], 
+        # target_modules=["query", "value"], # 匹配你 attention.py 的命名
         # target_modules=["query", "key", "value", "attention_dense", "interm_dense", "out_dense"],
         target_modules=["query", "key", "value", "attention_dense", "interm_dense", "out_dense"],
         r=args.lora_r,
@@ -390,9 +441,10 @@ def train(args):
     print("LoRA Model Info")
     print("=" * 80)
 
+    # PEFT 自带
     model.print_trainable_parameters()
 
-
+    # ===== trainable parameter 数量 =====
     trainable_params = sum(
         p.numel() for p in model.parameters()
         if p.requires_grad
@@ -408,7 +460,7 @@ def train(args):
     print(f"Total params     : {total_params:,}")
     print(f"Trainable ratio  : {ratio:.4f}%")
 
-
+    # ===== 保存 model info =====
     model_info_path = os.path.join(args.save_dir, "model_info.txt")
 
     with open(model_info_path, "w") as f:
@@ -421,7 +473,12 @@ def train(args):
   model = model.to(device)
 
   lr = args.lr
-  optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
+  # === 修改：优化器只传入 requires_grad=True 的参数，避免无谓的显存占用和报错 ===
+#   optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=lr)
+
+  # 修改：添加 weight_decay 参数进行 L2 正则化，帮助防止过拟合（尤其是在全模型微调时）
+
+  optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()),lr=lr,weight_decay=0.01)
 
   # model = model.to(device)
 
@@ -444,7 +501,11 @@ def train(args):
 
       optimizer.zero_grad()
       logits = model(b_ids, b_mask)
-      loss = F.cross_entropy(logits, b_labels.view(-1), reduction='sum') / args.batch_size
+    #   loss = F.cross_entropy(logits, b_labels.view(-1), reduction='sum') / args.batch_size
+      
+
+      # === 修改：添加 label_smoothing 参数 ===
+      loss = F.cross_entropy(logits,b_labels.view(-1),label_smoothing=0.1)
 
       loss.backward()
       optimizer.step()
@@ -481,6 +542,7 @@ def test(args):
     config = saved['model_config']
     model = GPT2SentimentClassifier(config)
     
+    # === 新增：如果在 lora 模式下训练，评估时也要先套上一样的壳子才能正常 load_state_dict ===
     if config.fine_tune_mode == 'lora':
         lora_config = LoraConfig(
 
@@ -580,10 +642,11 @@ if __name__ == "__main__":
       fine_tune_mode=args.fine_tune_mode,
       dev_out=os.path.join(save_dir, 'predictions', 'sst-dev.csv'),
       test_out=os.path.join(save_dir, 'predictions', 'sst-test.csv'),
-      lora_r=args.lora_r,
-      lora_alpha=args.lora_alpha,
-      lora_dropout=args.lora_dropout,
-      save_dir=args.save_dir 
+        # === 新增以下4行，将全局 args 的参数传进去 ===
+        lora_r=args.lora_r,
+        lora_alpha=args.lora_alpha,
+        lora_dropout=args.lora_dropout,
+        save_dir=args.save_dir 
   )
 
   train(config)
@@ -605,6 +668,7 @@ if __name__ == "__main__":
     fine_tune_mode=args.fine_tune_mode,
     dev_out=os.path.join(save_dir, 'predictions', 'cfimdb-dev.csv'),
     test_out=os.path.join(save_dir, 'predictions', 'cfimdb-test.csv'),
+    # === 新增以下4行，将全局 args 的参数传进去 ===
     lora_r=args.lora_r,
     lora_alpha=args.lora_alpha,
     lora_dropout=args.lora_dropout,

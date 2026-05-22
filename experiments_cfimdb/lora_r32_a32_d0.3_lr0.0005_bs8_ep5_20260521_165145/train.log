@@ -1,0 +1,50 @@
+================================================================================
+Experiment Created
+================================================================================
+Save Directory:
+experiments_cfimdb\lora_r32_a32_d0.3_lr0.0005_bs8_ep5_20260521_165145
+
+Arguments:
+seed: 11711
+epochs: 5
+fine_tune_mode: lora
+use_gpu: True
+batch_size: 8
+hidden_dropout_prob: 0.2
+lr: 0.0005
+lora_r: 32
+lora_alpha: 32
+lora_dropout: 0.3
+================================================================================
+Config saved to:
+experiments_cfimdb\lora_r32_a32_d0.3_lr0.0005_bs8_ep5_20260521_165145\config.json
+Log file saved to:
+experiments_cfimdb\lora_r32_a32_d0.3_lr0.0005_bs8_ep5_20260521_165145\train.log
+================================================================================
+Training Sentiment Classifier on cfimdb...
+load 1707 data from data/ids-cfimdb-train.csv
+load 245 data from data/ids-cfimdb-dev.csv
+
+================================================================================
+LoRA Model Info
+================================================================================
+trainable params: 1,181,186 || all params: 126,213,124 || trainable%: 0.9359
+Trainable params : 1,181,186
+Total params     : 126,213,124
+Trainable ratio  : 0.9359%
+Model info saved to:
+experiments_cfimdb\lora_r32_a32_d0.3_lr0.0005_bs8_ep5_20260521_165145\model_info.txt
+save the model to experiments_cfimdb\lora_r32_a32_d0.3_lr0.0005_bs8_ep5_20260521_165145\cfimdb-all-classifier.pt
+Epoch 0: train loss :: 0.520, train acc :: 0.965, dev acc :: 0.955
+save the model to experiments_cfimdb\lora_r32_a32_d0.3_lr0.0005_bs8_ep5_20260521_165145\cfimdb-all-classifier.pt
+Epoch 1: train loss :: 0.125, train acc :: 0.980, dev acc :: 0.976
+Epoch 2: train loss :: 0.092, train acc :: 0.988, dev acc :: 0.967
+save the model to experiments_cfimdb\lora_r32_a32_d0.3_lr0.0005_bs8_ep5_20260521_165145\cfimdb-all-classifier.pt
+Epoch 3: train loss :: 0.052, train acc :: 0.994, dev acc :: 0.980
+Epoch 4: train loss :: 0.048, train acc :: 0.996, dev acc :: 0.967
+Evaluating on cfimdb...
+load model from experiments_cfimdb\lora_r32_a32_d0.3_lr0.0005_bs8_ep5_20260521_165145\cfimdb-all-classifier.pt
+load 245 data from data/ids-cfimdb-dev.csv
+DONE DEV
+DONE Test
+dev acc :: 0.980

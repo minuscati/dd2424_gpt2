@@ -45,23 +45,50 @@ class AdamW(Optimizer):
                 # Access hyperparameters from the `group` dictionary.
                 alpha = group["lr"]
 
+                # 获取超参数
+                beta1, beta2 = group["betas"]
+                eps = group["eps"]
+                weight_decay = group["weight_decay"]
+                correct_bias = group["correct_bias"]
 
-                ### TODO: Complete the implementation of AdamW here, reading and saving
-                ###       your state in the `state` dictionary above.
-                ###       The hyperparameters can be read from the `group` dictionary
-                ###       (they are lr, betas, eps, weight_decay, as saved in the constructor).
-                ###
-                ###       To complete this implementation:
-                ###       1. Update the first and second moments of the gradients.
-                ###       2. Apply bias correction
-                ###          (using the "efficient version" given in https://arxiv.org/abs/1412.6980;
-                ###          also given in the pseudo-code in the project description).
-                ###       3. Update parameters (p.data).
-                ###       4. Apply weight decay after the main gradient-based updates.
-                ###
-                ###       Refer to the default project handout for more details.
-                ### YOUR CODE HERE
-                raise NotImplementedError
+                # 初始化状态 (State initialization)
+                if len(state) == 0:
+                    state["step"] = 0
+                    # 梯度的指数移动平均
+                    state["exp_avg"] = torch.zeros_like(p.data)
+                    # 梯度平方的指数移动平均
+                    state["exp_avg_sq"] = torch.zeros_like(p.data)
+
+                # 读取状态
+                exp_avg, exp_avg_sq = state["exp_avg"], state["exp_avg_sq"]
+                state["step"] += 1
+                t = state["step"]
+
+                # 1. 更新第一矩和第二矩 (Update the first and second moments of the gradients)
+                # m_t = beta1 * m_{t-1} + (1 - beta1) * grad
+                exp_avg.mul_(beta1).add_(grad, alpha=1.0 - beta1)
+                # v_t = beta2 * v_{t-1} + (1 - beta2) * grad^2
+                exp_avg_sq.mul_(beta2).addcmul_(grad, grad, value=1.0 - beta2)
+
+                # 2. 应用偏差校正 (Apply bias correction - Efficient version)
+                if correct_bias:
+                    bias_correction1 = 1.0 - beta1 ** t
+                    bias_correction2 = 1.0 - beta2 ** t
+                    # alpha_t = alpha * sqrt(1 - beta2^t) / (1 - beta1^t)
+                    step_size = alpha * math.sqrt(bias_correction2) / bias_correction1
+                else:
+                    step_size = alpha
+
+                # 3. 更新参数 (Update parameters p.data)
+                # p_t = p_{t-1} - alpha_t * m_t / (sqrt(v_t) + eps)
+                # 使用 in-place 操作 addcdiv_ 以提升内存效率
+                p.data.addcdiv_(exp_avg, exp_avg_sq.sqrt() + eps, value=-step_size)
+
+                # 4. 应用权重衰减 (Apply weight decay after the main gradient-based updates)
+                # AdamW 的特点：权重衰减直接作用于参数本身，而不是加在梯度上
+                # p_t = p_t - lr * weight_decay * p_t
+                if weight_decay > 0.0:
+                    p.data.add_(p.data, alpha=-alpha * weight_decay)
 
 
         return loss
