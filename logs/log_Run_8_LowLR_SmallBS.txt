@@ -1,0 +1,78 @@
+Run Name: Run_8_LowLR_SmallBS
+Training Config: LR=1e-05 | BS=4 | Best Epoch=7
+Decoding Config: Top-K=50 | Top-P=0.9 | RepPenalty=1.15
+Validation Loss: 3.8705 | Perplexity: 47.9688
+Final Validation corpus-chrF Score: 29.99
+
+========================================
+GENERATED POEMS SAMPLE
+========================================
+
+Prompt:
+Thine eyes I love, and they, as pitying me,
+Knowing thy heart torment me with disdain,
+Have put on black, and loving mourners be,
+
+Generated:
+ne eyes I love, and they, as pitying me,
+Knowing thy heart torment me with disdain,
+Have put on black, and loving mourners be,
+With their sweet cheeks painted in a deep red;
+And to thee, like my own sorrow,
+They praise all that which is true;
+Whose sight thou canst see, how much the world praises him
+Which, even so, still perceives
+The most bitter shade of his beauty;
+For, seeing this, why do th' other gods think
+That such an impure thing should live?
+  For, being born, yet, since,
+  They are one, but both have gone
+  To die for each another.
+  So, if, therefore, when two men were
+Reference:
+Looking with pretty ruth upon my pain.
+And truly not the morning sun of heaven
+Better becomes the gray cheeks of the east,
+Nor that full star that ushers in the even
+Doth half that glory to the sober west
+As those two mourning eyes become thy face.
+O, let it then as well beseem thy heart
+To mourn for me, since mourning doth thee grace,
+And suit thy pity like in every part.
+  Then will I swear beauty herself is black,
+  And all they foul that thy complexion lack.
+-
+
+Prompt:
+Beshrew that heart that makes my heart to groan
+For that deep wound it gives my friend and me.
+Is 't not enough to torture me alone,
+
+Generated:
+hrew that heart that makes my heart to groan
+For that deep wound it gives my friend and me.
+Is 't not enough to torture me alone,
+And then, when the world's night hath turned,
+To make him a prisoner of mine eye,
+When he in his sweetest hours is so keen,
+That, with all their might, I dare say,
+The poor eyes may well be seen,
+As they are now, at once, for nothing more than an ornament;
+But, 'twas true, 'tis, 'gainst no pleasure but,
+  For, though you know how strong this love
+   must come, 'neath every blot,
+  You find your mind filled by thoughts which do ill.
+   Then,
+Reference:
+But slave to slavery my sweet'st friend must be?
+Me from myself thy cruel eye hath taken,
+And my next self thou harder hast engrossed;
+Of him, myself, and thee I am forsaken,
+A torment thrice threefold thus to be crossed.
+Prison my heart in thy steel bosom's ward,
+But then my friend's heart let my poor heart bail.
+Whoe'er keeps me, let my heart be his guard;
+Thou canst not then use rigor in my jail.
+  And yet thou wilt, for I, being pent in thee,
+  Perforce am thine, and all that is in me.
+-

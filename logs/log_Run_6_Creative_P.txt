@@ -1,0 +1,78 @@
+Run Name: Run_6_Creative_P
+Training Config: LR=5e-05 | BS=8 | Best Epoch=2
+Decoding Config: Top-K=50 | Top-P=0.95 | RepPenalty=1.15
+Validation Loss: 3.8039 | Perplexity: 44.8765
+Final Validation corpus-chrF Score: 29.54
+
+========================================
+GENERATED POEMS SAMPLE
+========================================
+
+Prompt:
+Thine eyes I love, and they, as pitying me,
+Knowing thy heart torment me with disdain,
+Have put on black, and loving mourners be,
+
+Generated:
+ne eyes I love, and they, as pitying me,
+Knowing thy heart torment me with disdain,
+Have put on black, and loving mourners be,
+The fair face of the world's best;
+Yet, for my part, thou art so gracious,
+That, if this fortune to thee were but a sweet-hearted,
+And in all that beauty mightst see,
+Doth not steal away, nor dost have it leave,
+Which are most dear, more than heaven,
+Nor, being found dead, do seem,
+Hath no one, yet there is
+Of such gentle spirit, how happy or sad
+A wise-tongued friend.
+  All others, then, who die from your neglect,
+  To whom, though he
+Reference:
+Looking with pretty ruth upon my pain.
+And truly not the morning sun of heaven
+Better becomes the gray cheeks of the east,
+Nor that full star that ushers in the even
+Doth half that glory to the sober west
+As those two mourning eyes become thy face.
+O, let it then as well beseem thy heart
+To mourn for me, since mourning doth thee grace,
+And suit thy pity like in every part.
+  Then will I swear beauty herself is black,
+  And all they foul that thy complexion lack.
+-
+
+Prompt:
+Beshrew that heart that makes my heart to groan
+For that deep wound it gives my friend and me.
+Is 't not enough to torture me alone,
+
+Generated:
+hrew that heart that makes my heart to groan
+For that deep wound it gives my friend and me.
+Is 't not enough to torture me alone,
+When all the world's pain is gone,
+But I can hold myself at liberty,
+And find a place where no one must live.
+I then, in such strong form,
+Shall be for ever more than with those who will bear
+The sweet sight of thee,
+Or shall stay even till their death.
+  But if thou wilt make heaven,
+  Then look on, but leave thy mind
+  That shows off, yet say,
+  'Aught 'tis mine, 'twill love him whom he best.
+Reference:
+But slave to slavery my sweet'st friend must be?
+Me from myself thy cruel eye hath taken,
+And my next self thou harder hast engrossed;
+Of him, myself, and thee I am forsaken,
+A torment thrice threefold thus to be crossed.
+Prison my heart in thy steel bosom's ward,
+But then my friend's heart let my poor heart bail.
+Whoe'er keeps me, let my heart be his guard;
+Thou canst not then use rigor in my jail.
+  And yet thou wilt, for I, being pent in thee,
+  Perforce am thine, and all that is in me.
+-

@@ -1,0 +1,79 @@
+Run Name: Run_10_MidLR_LargeBS
+Training Config: LR=3e-05 | BS=8 | Best Epoch=4
+Decoding Config: Top-K=50 | Top-P=0.9 | RepPenalty=1.15
+Validation Loss: 3.8115 | Perplexity: 45.2168
+Final Validation corpus-chrF Score: 30.51
+
+========================================
+GENERATED POEMS SAMPLE
+========================================
+
+Prompt:
+Thine eyes I love, and they, as pitying me,
+Knowing thy heart torment me with disdain,
+Have put on black, and loving mourners be,
+
+Generated:
+ne eyes I love, and they, as pitying me,
+Knowing thy heart torment me with disdain,
+Have put on black, and loving mourners be,
+And praise of them by thee,
+For thou art my sweet child, whom so fair a muse
+Supposes to have it's beauty but in itself,
+To bring forth such riches from the grave,
+As should not, if this were mine own, give th' poor self,
+So, dear mistress, that all those worthless things
+Were made for myself,
+When, being born, dost make themselves worthy
+In another world, where, though ever there is,
+Still amaury doth seem part, even when their time hath come,
+  For heaven knows how much better life can find
+Reference:
+Looking with pretty ruth upon my pain.
+And truly not the morning sun of heaven
+Better becomes the gray cheeks of the east,
+Nor that full star that ushers in the even
+Doth half that glory to the sober west
+As those two mourning eyes become thy face.
+O, let it then as well beseem thy heart
+To mourn for me, since mourning doth thee grace,
+And suit thy pity like in every part.
+  Then will I swear beauty herself is black,
+  And all they foul that thy complexion lack.
+-
+
+Prompt:
+Beshrew that heart that makes my heart to groan
+For that deep wound it gives my friend and me.
+Is 't not enough to torture me alone,
+
+Generated:
+hrew that heart that makes my heart to groan
+For that deep wound it gives my friend and me.
+Is 't not enough to torture me alone,
+But, when I am sick, do no more
+Th' abuse of his name,
+To say, 'I love thee, thou art the most loving spirit
+Of this world;
+Your gentle kindness is for mine use;
+If you like, give him back with your own hand;
+Give praise, even if he be a coward,
+And in all thy gifts, make sure
+That, where ever yours are,
+He keeps what belongs.'
+  But then, seeing, 'tis better than none,
+  That 'thou wilt leave any stain on our souls.
+  And thus, '
+Reference:
+But slave to slavery my sweet'st friend must be?
+Me from myself thy cruel eye hath taken,
+And my next self thou harder hast engrossed;
+Of him, myself, and thee I am forsaken,
+A torment thrice threefold thus to be crossed.
+Prison my heart in thy steel bosom's ward,
+But then my friend's heart let my poor heart bail.
+Whoe'er keeps me, let my heart be his guard;
+Thou canst not then use rigor in my jail.
+  And yet thou wilt, for I, being pent in thee,
+  Perforce am thine, and all that is in me.
+-

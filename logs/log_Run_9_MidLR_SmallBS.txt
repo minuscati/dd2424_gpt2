@@ -1,0 +1,79 @@
+Run Name: Run_9_MidLR_SmallBS
+Training Config: LR=3e-05 | BS=4 | Best Epoch=2
+Decoding Config: Top-K=50 | Top-P=0.9 | RepPenalty=1.15
+Validation Loss: 3.8761 | Perplexity: 48.2356
+Final Validation corpus-chrF Score: 29.91
+
+========================================
+GENERATED POEMS SAMPLE
+========================================
+
+Prompt:
+Thine eyes I love, and they, as pitying me,
+Knowing thy heart torment me with disdain,
+Have put on black, and loving mourners be,
+
+Generated:
+ne eyes I love, and they, as pitying me,
+Knowing thy heart torment me with disdain,
+Have put on black, and loving mourners be,
+And yet, to my sight, have seen all
+The beauties of their beauty,
+For in them, like the moon's fair face,
+They doth not seem worth so much,
+As that which, by heaven, may live,
+Which, for mine own sake, should grow
+From myself, when thou art a partaker.
+  This, then, is what this world must keep
+  And why, since it cannot see,
+  My mind will never know thee, but only,
+  As though from thence, unseen, there were,
+  Or, if she still dwells,
+Reference:
+Looking with pretty ruth upon my pain.
+And truly not the morning sun of heaven
+Better becomes the gray cheeks of the east,
+Nor that full star that ushers in the even
+Doth half that glory to the sober west
+As those two mourning eyes become thy face.
+O, let it then as well beseem thy heart
+To mourn for me, since mourning doth thee grace,
+And suit thy pity like in every part.
+  Then will I swear beauty herself is black,
+  And all they foul that thy complexion lack.
+-
+
+Prompt:
+Beshrew that heart that makes my heart to groan
+For that deep wound it gives my friend and me.
+Is 't not enough to torture me alone,
+
+Generated:
+hrew that heart that makes my heart to groan
+For that deep wound it gives my friend and me.
+Is 't not enough to torture me alone,
+Even in thy thoughts, if I will suffer,
+That thou, with thine eye, be the penitent
+Of all such a crime, when he doth write
+With his eyes fixed on thee.
+Yet let him know, then,
+And tell what love is worth,
+If, after this, you do find one of mine,
+Thou art so cruel, for, though by some fault,
+Myself, at least, have done,
+By being, or thinking, like myself.
+  And, as far from self-love, yet,
+  To live, but, perhaps,
+Reference:
+But slave to slavery my sweet'st friend must be?
+Me from myself thy cruel eye hath taken,
+And my next self thou harder hast engrossed;
+Of him, myself, and thee I am forsaken,
+A torment thrice threefold thus to be crossed.
+Prison my heart in thy steel bosom's ward,
+But then my friend's heart let my poor heart bail.
+Whoe'er keeps me, let my heart be his guard;
+Thou canst not then use rigor in my jail.
+  And yet thou wilt, for I, being pent in thee,
+  Perforce am thine, and all that is in me.
+-

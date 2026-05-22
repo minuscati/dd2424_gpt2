@@ -1,0 +1,78 @@
+Run Name: Run_2_Mild_Penalty
+Training Config: LR=5e-05 | BS=8 | Best Epoch=2
+Decoding Config: Top-K=50 | Top-P=0.9 | RepPenalty=1.1
+Validation Loss: 3.8039 | Perplexity: 44.8765
+Final Validation corpus-chrF Score: 29.51
+
+========================================
+GENERATED POEMS SAMPLE
+========================================
+
+Prompt:
+Thine eyes I love, and they, as pitying me,
+Knowing thy heart torment me with disdain,
+Have put on black, and loving mourners be,
+
+Generated:
+ne eyes I love, and they, as pitying me,
+Knowing thy heart torment me with disdain,
+Have put on black, and loving mourners be,
+That see thee in all my grief;
+And their frowns do not leave a blot,
+Nor amaze the sight of them that weep
+Of sorrowful tears, nor canst thou dost show
+When, then, mine true hope is shaken,
+Who, though so great, by such faults shall lose
+My beauty, to whom, like myself,
+I owe most dear, for nothing more than your own thought
+Doth keep it alive.
+  Then, what, why, how, or where?
+  To those who have been, let no fear linger,
+  For, if some blame
+Reference:
+Looking with pretty ruth upon my pain.
+And truly not the morning sun of heaven
+Better becomes the gray cheeks of the east,
+Nor that full star that ushers in the even
+Doth half that glory to the sober west
+As those two mourning eyes become thy face.
+O, let it then as well beseem thy heart
+To mourn for me, since mourning doth thee grace,
+And suit thy pity like in every part.
+  Then will I swear beauty herself is black,
+  And all they foul that thy complexion lack.
+-
+
+Prompt:
+Beshrew that heart that makes my heart to groan
+For that deep wound it gives my friend and me.
+Is 't not enough to torture me alone,
+
+Generated:
+hrew that heart that makes my heart to groan
+For that deep wound it gives my friend and me.
+Is 't not enough to torture me alone,
+And, for what's wrong with 'gainst, have I no more,
+Thou art 'twixt the poor, those who are dead,
+Which do suffer, but live.
+If, being slain, they go, 'tis in their grief
+That 's most painful of them,
+The last he whose soul lives,
+When 'bonded, when his life is gone.
+  But why then, if this be true,
+  To give thee such a gift as thyself doth bring
+  If thou hast 'd made him so,
+  As by another time did mine love
+Reference:
+But slave to slavery my sweet'st friend must be?
+Me from myself thy cruel eye hath taken,
+And my next self thou harder hast engrossed;
+Of him, myself, and thee I am forsaken,
+A torment thrice threefold thus to be crossed.
+Prison my heart in thy steel bosom's ward,
+But then my friend's heart let my poor heart bail.
+Whoe'er keeps me, let my heart be his guard;
+Thou canst not then use rigor in my jail.
+  And yet thou wilt, for I, being pent in thee,
+  Perforce am thine, and all that is in me.
+-

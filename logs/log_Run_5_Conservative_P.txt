@@ -1,0 +1,81 @@
+Run Name: Run_5_Conservative_P
+Training Config: LR=5e-05 | BS=8 | Best Epoch=2
+Decoding Config: Top-K=50 | Top-P=0.75 | RepPenalty=1.15
+Validation Loss: 3.8039 | Perplexity: 44.8765
+Final Validation corpus-chrF Score: 29.87
+
+========================================
+GENERATED POEMS SAMPLE
+========================================
+
+Prompt:
+Thine eyes I love, and they, as pitying me,
+Knowing thy heart torment me with disdain,
+Have put on black, and loving mourners be,
+
+Generated:
+ne eyes I love, and they, as pitying me,
+Knowing thy heart torment me with disdain,
+Have put on black, and loving mourners be,
+And say, 'We must die of grief,
+That thou art so cruel that we may see
+The sight, but not the sorrow.'
+But, being gone, my eye is still mine,
+For this, though it did lose its glory,
+So far from seeing thee, yet in spite,
+Still, when you are away, dost give praise.
+  For, having seen, now let them all look
+  And to hear their praises, shall live
+  In what a state hath life been?
+  But if, after death, shouldst make some change,
+  Then, by such
+Reference:
+Looking with pretty ruth upon my pain.
+And truly not the morning sun of heaven
+Better becomes the gray cheeks of the east,
+Nor that full star that ushers in the even
+Doth half that glory to the sober west
+As those two mourning eyes become thy face.
+O, let it then as well beseem thy heart
+To mourn for me, since mourning doth thee grace,
+And suit thy pity like in every part.
+  Then will I swear beauty herself is black,
+  And all they foul that thy complexion lack.
+-
+
+Prompt:
+Beshrew that heart that makes my heart to groan
+For that deep wound it gives my friend and me.
+Is 't not enough to torture me alone,
+
+Generated:
+hrew that heart that makes my heart to groan
+For that deep wound it gives my friend and me.
+Is 't not enough to torture me alone,
+That with love's strength,
+My sweet bosom is more strong than mine,
+Or, if I would be so,
+To make myself his slave.
+O, thou art a true man,
+And by this means of being the worst
+Thou shalt do all things in thyself.
+But, when he thinks,
+I should say, 'If you have no fear,
+Be contented, or else let him look
+At thee, as though,
+By your kindness, 'tis nothing but what was done.
+  Then, then, why, wherefore,
+  And how didst
+Reference:
+But slave to slavery my sweet'st friend must be?
+Me from myself thy cruel eye hath taken,
+And my next self thou harder hast engrossed;
+Of him, myself, and thee I am forsaken,
+A torment thrice threefold thus to be crossed.
+Prison my heart in thy steel bosom's ward,
+But then my friend's heart let my poor heart bail.
+Whoe'er keeps me, let my heart be his guard;
+Thou canst not then use rigor in my jail.
+  And yet thou wilt, for I, being pent in thee,
+  Perforce am thine, and all that is in me.
+-
